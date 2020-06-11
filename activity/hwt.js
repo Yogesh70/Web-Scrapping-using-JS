@@ -27,15 +27,23 @@ function cb(err, response, html) {
 
             let Players = $('.table.bowler tbody tr');
 
-            fs.writeFileSync("bowlers.html", Players);
+            let maxWickets = 0;
+            let hwt= "";
+            // fs.writeFileSync("bowlers.html", Players);
             for(let i=0; i< Players.length;i++) {
                 //get Name
                 let allColOfAPlayer = $(Players[i]).find("td");
                 let cPlayerName = $(allColOfAPlayer[0]).text();
                 let wickets = $(allColOfAPlayer[4]).text();
 
+                if(Number(wickets) > maxWickets) {
+                    hwt = cPlayerName;
+                    maxWickets = Number(wickets);
+                }
                 console.log(cPlayerName + " " + wickets);
                 //get Wickets
-            }    
+            }
+            console.log("```````````````````````````````");    
+            console.log(`${hwt} ${maxWickets}`);
         }
         
