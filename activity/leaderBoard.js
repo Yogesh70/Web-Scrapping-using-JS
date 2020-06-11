@@ -45,8 +45,6 @@ function parseSeriesPage(html) {
 
         }
     }
-
-
 }
 
 // page Link => request => response => recieve=> parseMatch
@@ -78,6 +76,7 @@ function parseMatch(html) {
         let teamName = $(cInning).find("h5").text();
         console.log(teamName);
         let BatsmenList = $(cInning).find(".table.batsman tbody tr");
+
         for (let j = 0; j < BatsmenList.length; j++) {
             let bCols = $(BatsmenList[j]).find("td");
             let isBatsManRow = $(bCols[0]).hasClass("batsman-cell");
@@ -96,5 +95,3 @@ function parseMatch(html) {
 function AddToLeaderBoard(name, team, run, mType) {
 
 }
-
-//to check commit
