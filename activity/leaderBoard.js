@@ -6,6 +6,7 @@ let cheerio = require("cheerio");
 console.log("Sending Request");
 let url = "https://www.espncricinfo.com/scores/series/19322/india-in-new-zealand-2019-20?view=results";
 // cb will be called when request recieves the data
+let leaderboard = [], count = 0;
 request(url, cb);
 function cb(err, response, html) {
     // consol
@@ -41,14 +42,16 @@ function parseSeriesPage(html) {
             // console.log(matchLink);
             let fullLink = `https://www.espncricinfo.com${matchLink}`;
             // console.log(fullLink);
-            handleEachMatch(fullLink)
+            handleEachMatch(fullLink);
+            count++;
 
         }
     }
 }
 
-// page Link => request => response => recieve=> parseMatch
+// page Link => request => response => recieve => parseMatch
 function handleEachMatch(matchLink) {
+    //async function
     request(matchLink, mcb);
     function mcb(err, response, html) {
         // consol
@@ -57,6 +60,10 @@ function handleEachMatch(matchLink) {
             // fs.writeFileSync(".html", html);
             console.log("File Saved");
             parseMatch(html);
+            count--;
+            if(count == 0) {
+                console.table(leaderboard);
+            }
         } else if (response.statusCode == 404) {
             console.log("Page not found");
         } else {
@@ -65,16 +72,24 @@ function handleEachMatch(matchLink) {
         }
     }
 }
-//input=> matchPageHtml=>  get respective teamName,run,type,score of a player
+//input=> matchPageHtml => get respective teamName,run,type,score of a player
 function parseMatch(html) {
     let $ = cheerio.load(html);
+    let format = $(".desc text-truncate").text();
+        if(format.includes("ODI") == true) {
+            format = "ODI";
+        } else {
+            format = "T20I";
+        }
+    // console.log(format);
     // scorecards
     let innings = $(".card.content-block.match-scorecard-table");
     innings = innings.slice(0, 2);
     for (let i = 0; i < innings.length; i++) {
         let cInning = innings[i];
         let teamName = $(cInning).find("h5").text();
-        console.log(teamName);
+        // console.log(teamName);
+        teamName= teamName.split("Innings").shift();
         let BatsmenList = $(cInning).find(".table.batsman tbody tr");
 
         for (let j = 0; j < BatsmenList.length; j++) {
@@ -83,15 +98,33 @@ function parseMatch(html) {
             if (isBatsManRow) {
                 let batsManName = $(bCols[0]).text();
                 let runs = $(bCols[2]).text();
-                console.log( batsManName + " " + runs);
+                // console.log( batsManName + " " + runs);
+                AddToLeaderBoard(batsManName, teamName, runs,format);
             }
         }
-        console.log("###############################");
+        // console.log("###############################");
     }
-    console.log("```````````````````````````````````````````````````````````````````");
+    // console.log("```````````````````````````````````````````````````````````````````");
 }
-// 
-// create leaderboard
-function AddToLeaderBoard(name, team, run, mType) {
 
+// create leaderboard
+function AddToLeaderBoard(name, team, runs, format) {
+    //check => Entry exist => total runs update
+    runs = Number(runs);
+    for(let i=0; i < leaderboard.length;i++) {
+        let cPlayerInfo = leaderboard[i];
+        let match = cPlayerInfo.Name == name && cPlayerInfo.Team == team && cPlayerInfo.Format == format;
+        if(match == true) {
+            //update
+            cPlayerInfo.TotalRuns += runs;
+            return;
+        }
+    } 
+    //create a new entry and push to leaderboard
+    let playerInfo = {};
+    playerInfo.TotalRuns = runs;
+    playerInfo.Name = name;
+    playerInfo.Team = team;
+    playerInfo.Format = format;
+    leaderboard.push(playerInfo);      
 }
